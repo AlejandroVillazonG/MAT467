@@ -66,20 +66,18 @@ ggplot(datos, aes(x = lon, y = lat, color = factor(Y))) +
   theme_minimal()
 
 
-mantel <- function(s, Y) {
-  n <- nrow(s)
-  suma <- 0
-  for (i in 1:(n - 1)) {
-    for (j in (i + 1):n) {
-      diferencia_abs <- abs(Y[i] - Y[j])
-      distancia <- sqrt(sum((s[i, ] - s[j, ])^2))
-      suma <- suma + diferencia_abs * distancia
-    }
-  }
-  return(suma * 2)
+# subset
+datos <- subset(datos, lat >= 31 & lat <= 34 & lon >= -102 & lon <= -99)
+
+# Geary
+library(spdep)
+w <- as.matrix(dist(datos[,1:2]))
+listw <- mat2listw(w)
+
+taus <- seq(min(datos$z) + 1e-1, max(datos$z) - 1e-1, length.out = 100)
+gearys <- list()
+
+for (i in 1:length(taus)) {
+  Y <- ifelse(datos$z >= taus[i], 1, 0)
+  gearys[i] <- geary.test(Y, listw = listw, alternative = 'two.sided')$p.value#estimate[1]
 }
-
-resultado <- mantel(datos[, c('lon', 'lat')], datos$Y)
-print(resultado)
-
-
